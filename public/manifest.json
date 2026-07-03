@@ -1,0 +1,10 @@
+{
+	"id": "phoundry.taskmanager",
+	"name": "Task Manager",
+	"version": "0.1.0",
+	"minAppVersion": "0.1.0",
+	"author": "Phoundry",
+	"description": "Simple task lists with priorities and due dates (community module plugin)",
+	"repository": "https://github.com/phoundry/phials-plugin-taskmanager",
+	"permissions": []
+}
