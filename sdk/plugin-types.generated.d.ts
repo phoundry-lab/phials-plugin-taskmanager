@@ -73,7 +73,6 @@ interface PhialsPlugin {
 	providers: PluginProvider[];
 }
 
-
 // ─── Provider Types ──────────────────────────────────────────────────────────
 
 /**
@@ -199,11 +198,8 @@ interface PreviewProvider {
 	preview?: import("svelte").Component<PreviewProviderProps>;
 	fullscreen?: import("svelte").Component<FullscreenProviderProps>;
 
-	/**
-	 * Details view row-height presets (`xs`–`lg`, details slider ticks) at which
-	 * the leading column mounts {@link thumbnail}. Omitted or empty = icon only.
-	 */
-	detailsViewThumbnails?: ViewItemSizePreset[];
+	/** Allow a leading thumbnail in non-compact Details rows. */
+	detailsViewThumbnail?: boolean;
 
 	/** Behavior */
 	overridesDoubleClick?: boolean;
