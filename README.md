@@ -8,7 +8,7 @@ Unlike [phials-plugin-example](https://github.com/phoundry/phials-plugin-example
 
 ## Features
 
-- **Module** — dockable panel (default: right) with list sidebar and task list
+- **Module** — dockable tab (default: right) that can also move into modular center groups
 - **Lists** — named lists with a protected default **Inbox**
 - **Tasks** — title, Low/Medium/High priority, optional date-only due dates, complete/delete
 - **Settings** — default sort, show completed, relative vs absolute due dates
@@ -52,5 +52,5 @@ When Phials plugin types change:
 ```bash
 cd /path/to/phials
 npm run sdk:sync-plugin-example
-# Copy sdk/ into this repo, or add a dedicated sync script
+PHIALS_PLUGIN_EXAMPLE_ROOT=../phials-plugin-taskmanager node scripts/sync-plugin-sdk.mjs
 ```

@@ -1,4 +1,4 @@
-// @generated from phials — do not edit
+// @generated from phials - do not edit
 // Synced by phials/scripts/sync-plugin-sdk.mjs
 
 /// <reference path="./pane-context.stub.d.ts" />
@@ -73,6 +73,22 @@ interface PhialsPlugin {
 	providers: PluginProvider[];
 }
 
+
+/**
+ * Svelte runtime re-exported from a community plugin bundle (`main.js`).
+ * Required so host code mounts plugin components with the same runtime that compiled them.
+ */
+interface PluginSvelteRuntime {
+	mount: (
+		component: import("svelte").Component<Record<string, unknown>>,
+		options: {
+			target: Element | Document | ShadowRoot;
+			props?: Record<string, unknown>;
+		},
+	) => unknown;
+	unmount: (instance: unknown) => void;
+}
+
 // ─── Provider Types ──────────────────────────────────────────────────────────
 
 /**
@@ -84,7 +100,6 @@ type PluginProvider =
 	| MetadataProvider
 	| ToolbarButtonProvider
 	| FileBrowserViewProvider
-	| ThemeProvider
 	| SelectionProvider
 	| ModuleProvider
 	| CommandProvider;
@@ -98,7 +113,6 @@ type ProviderType =
 	| "metadata"
 	| "toolbar"
 	| "view"
-	| "theme"
 	| "selection"
 	| "module"
 	| "command";
@@ -110,6 +124,50 @@ type ProviderType =
  */
 interface PreviewProviderProps {
 	file: FileEntry;
+}
+
+type PreviewDestination = "module" | "tab" | "gallery" | "page" | "embed";
+
+/** Provider-owned state shared by every presentation of one file preview. */
+interface PreviewSession {
+	/** Clean unreferenced sessions are disposed; unresolved work can retain itself. */
+	retainOnRelease?: () => boolean;
+	dispose?: () => void | Promise<void>;
+	/** Optional in-app path relocation hook. */
+	relocate?: (oldPath: string, newPath: string) => void | Promise<void>;
+	/** Standard editor state rendered by host preview toolbars. */
+	editor?: PreviewToolbarEditorState;
+}
+
+interface PreviewSessionFactoryProps {
+	file: FileEntry;
+}
+
+interface PreviewSurfaceProps {
+	file: FileEntry;
+	session?: PreviewSession;
+	/** Host destination; `embed` requires inspection-only behavior. */
+	destination?: PreviewDestination;
+	/** One-shot focus request; does not describe the host destination. */
+	focusEditor?: boolean;
+	onConsumeFocusEditor?: () => void;
+}
+
+interface PreviewToolbarContributionProps {
+	file: FileEntry;
+	session?: PreviewSession;
+}
+
+interface PreviewToolbarContributions {
+	start?: import("svelte").Component<PreviewToolbarContributionProps>;
+	center?: import("svelte").Component<PreviewToolbarContributionProps>;
+	end?: import("svelte").Component<PreviewToolbarContributionProps>;
+}
+
+interface PreviewDestinationCapabilities {
+	previewTab?: boolean;
+	/** Surface is safe to mount inspection-only inside Markdown. */
+	embed?: boolean;
 }
 
 /** Where the host mounted the thumbnail component. */
@@ -133,7 +191,7 @@ interface ThumbnailProviderProps {
 }
 
 /**
- * Preview toolbar surface — sidebar embed vs preview tab / gallery fullscreen stage.
+ * Preview toolbar surface - sidebar embed vs preview tab / gallery fullscreen stage.
  */
 type PreviewToolbarSurface = "sidebar" | "fullscreen";
 
@@ -147,13 +205,22 @@ interface EditorHistoryHandle {
 	canRedo: boolean;
 }
 
+interface PhormatEditorEmbedderHandle {
+	prepareForSave(): string;
+	hasActiveDraft(): boolean;
+}
+
 /**
  * Editor bundle props for {@link PreviewToolbar}.
  */
 interface PreviewToolbarEditorState {
 	isDirty: boolean;
+	/** Hide explicit persistence chrome while retaining history controls. */
+	autosave?: boolean;
 	saving?: boolean;
 	onSave: () => void | Promise<void>;
+	/** Await autosave finalization before replacing the current document. */
+	onFinalize?: () => Promise<boolean>;
 	onRevert?: () => void;
 	history?: EditorHistoryHandle;
 	saveLabel?: string;
@@ -195,7 +262,16 @@ interface PreviewProvider {
 
 	/** Components */
 	thumbnail?: import("svelte").Component<ThumbnailProviderProps>;
+	/** Responsive file-specific viewer/editor used by every host destination. */
+	surface?: import("svelte").Component<PreviewSurfaceProps>;
+	createSession?: (
+		props: PreviewSessionFactoryProps,
+	) => PreviewSession | Promise<PreviewSession>;
+	toolbar?: PreviewToolbarContributions;
+	destinations?: PreviewDestinationCapabilities;
+	/** @deprecated One-cycle compatibility component; use `surface`. */
 	preview?: import("svelte").Component<PreviewProviderProps>;
+	/** @deprecated One-cycle compatibility component; use `surface`. */
 	fullscreen?: import("svelte").Component<FullscreenProviderProps>;
 
 	/** Allow a leading thumbnail in non-compact Details rows. */
@@ -658,23 +734,6 @@ interface FileBrowserViewProvider {
 	) => import("phoundry-ui").MenuItem[];
 }
 
-// ─── Theme Provider ──────────────────────────────────────────────────────────
-
-type _ThemeDefinition = import("phoundry-ui").ThemeDefinition;
-type _ThemeVariables = import("phoundry-ui").ThemeVariables;
-
-/**
- * Theme provider for the plugin system.
- * Extends phoundry-ui's ThemeDefinition with a `type` discriminator
- * so the PluginProvider union routing continues to work.
- */
-interface ThemeProvider extends _ThemeDefinition {
-	type: "theme";
-}
-
-/** Re-export for convenience — consumers should prefer importing from phoundry-ui directly. */
-type ThemeVariables = _ThemeVariables;
-
 // ─── Selection Provider ──────────────────────────────────────────────────────
 
 /**
@@ -704,7 +763,8 @@ interface SelectionProviderItem {
 }
 
 /**
- * Selection provider - contributes actions to the multi-selection toolbar
+ * Selection provider - deprecated. The selection toolbar was removed.
+ * Use CommandProvider with contextMenu placements (selectionMode: "multi").
  */
 interface SelectionProvider {
 	type: "selection";
@@ -744,10 +804,10 @@ interface ModuleProviderProps {
 }
 
 /**
- * Module provider - provides a UI module that can be placed in any panel
+ * Module provider - provides a UI module for panels and center tab groups
  *
  * Modules are self-contained UI components like Navigator, File Preview,
- * or Terminal that can be arranged in tabs or splits within panels.
+ * or Terminal that can be arranged in panel tabs or modular center groups.
  */
 interface ModuleProvider {
 	type: "module";
@@ -787,6 +847,24 @@ interface ModuleProvider {
 
 	/** Dynamic tab icon when rendered in center (falls back to `icon`) */
 	getTabIcon?: (state?: unknown) => string;
+
+	/** Stable content identity used to focus an equivalent center tab before creating one. */
+	getCenterTabIdentity?: (state?: unknown) => string | undefined;
+
+	/** Opt in to same-type replacement of an active, unpinned center tab. */
+	canReplaceCenterTab?: (
+		currentState: unknown,
+		requestedState: unknown,
+	) => boolean;
+
+	/** Finalize or refuse unresolved state before close or center-tab replacement. */
+	finalizeCenterTab?: (moduleInstance: ModuleInstance) => Promise<boolean>;
+
+	/** Optional panel module tab bar menu items (phoundry-ui context menu rows). */
+	getTabBarMenuItems?: (
+		moduleInstance: ModuleInstance,
+		api: ModuleAPI,
+	) => import("phoundry-ui").MenuItem[];
 }
 
 // ─── Plugin Settings ─────────────────────────────────────────────────────────
@@ -1199,6 +1277,12 @@ interface PluginAPI {
  * Same runtime object as {@link PluginAPI} for that plugin; reserved for future view helpers.
  */
 interface ViewAPI extends PluginAPI {}
+
+/**
+ * API passed to module tab bar menu item factories (scoped to the module's owning plugin).
+ * Same runtime object as {@link PluginAPI} for that plugin; reserved for future module helpers.
+ */
+interface ModuleAPI extends PluginAPI {}
 
 /**
  * Preview API - extended API for preview providers
