@@ -24,7 +24,7 @@ class TaskManagerService {
 		api.events.register("focus-request", "Focus the task manager add field");
 		this.#focusSubscription?.unsubscribe();
 		this.#focusSubscription = api.events.on(
-			FOCUS_EVENT as keyof EventMap,
+			FOCUS_EVENT,
 			() => {
 				this.requestFocusAddInput();
 			},
@@ -269,7 +269,7 @@ class TaskManagerService {
 	async quickAddFromCommand(title: string): Promise<void> {
 		await this.addTask(title);
 		this.requestFocusAddInput();
-		this.#api?.events.emit(FOCUS_EVENT as keyof EventMap, {});
+		this.#api?.events.emit(FOCUS_EVENT, {});
 	}
 
 	async #ensureInboxList(): Promise<void> {

@@ -10,6 +10,7 @@ import {
 import { taskManagerService } from "./task-manager/task-manager.svelte";
 
 const taskDatabase: PluginDatabaseSchema = {
+  version: 1,
   tables: [
     {
       name: "lists",
@@ -113,7 +114,7 @@ export default function createPlugin(): PhialsPlugin {
       api?.notify.info(
         "Open Task Manager from the panel module picker if it is not visible.",
       );
-      api?.events.emit(`${PLUGIN_ID}.focus-request` as keyof EventMap, {});
+      api?.events.emit(`${PLUGIN_ID}.focus-request`, {});
     },
   };
 
@@ -153,7 +154,6 @@ export default function createPlugin(): PhialsPlugin {
     id: PLUGIN_ID,
     name: "Task Manager",
     version: "0.1.0",
-    icons: [moduleProvider.icon],
     settings: taskSettings,
     database: taskDatabase,
     onActivate: (pluginApi: PluginAPI) => {

@@ -1,5 +1,9 @@
 type TaskPriority = 0 | 1 | 2;
 
+interface PluginEvents {
+	"phoundry.taskmanager.focus-request": Record<string, never>;
+}
+
 type TaskSortKey = "due_date" | "priority" | "created";
 
 type TaskDateFormat = "relative" | "absolute";

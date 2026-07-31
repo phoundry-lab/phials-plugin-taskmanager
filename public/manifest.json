@@ -3,8 +3,10 @@
 	"name": "Task Manager",
 	"version": "0.1.0",
 	"minAppVersion": "0.1.0",
+	"pluginApiVersion": "1.0.0",
 	"author": "Phoundry",
 	"description": "Simple task lists with priorities and due dates (community module plugin)",
 	"repository": "https://github.com/phoundry/phials-plugin-taskmanager",
+	"icons": ["mdi:checkbox-marked-outline", "mdi:plus-circle-outline"],
 	"permissions": []
 }
