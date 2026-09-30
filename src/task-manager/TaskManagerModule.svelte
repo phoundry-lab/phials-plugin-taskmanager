@@ -152,7 +152,8 @@
 		>
 			<TextInput
 				bind:element={addInputEl}
-				bind:value={newTaskTitle}
+				value={newTaskTitle}
+				oninput={(value) => (newTaskTitle = value)}
 				placeholder="Add a task…"
 				size="sm"
 			/>
