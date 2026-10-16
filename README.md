@@ -52,5 +52,5 @@ When Phials plugin types change:
 ```bash
 cd /path/to/phials
 npm run sdk:sync-plugin-example
-PHIALS_PLUGIN_EXAMPLE_ROOT=../phials-plugin-taskmanager node scripts/sync-plugin-sdk.mjs
+PHIALS_PLUGIN_EXAMPLE_ROOT=../phials-plugin-taskmanager node scripts/sdk/sync-plugin-sdk.mjs
 ```
